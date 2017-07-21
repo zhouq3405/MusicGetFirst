@@ -215,7 +215,7 @@ void MainWindow::on_pushButton_2_clicked()
 
 
 
-    QEventLoop loop;
+    QEventLoop loop;;
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
     if(reply->error()==QNetworkReply::NoError)
