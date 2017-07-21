@@ -207,7 +207,8 @@ void MainWindow::on_pushButton_2_clicked()
 #ifdef USE_WIRESHARK
     //requestsong.setRawHeader("Accept-Encoding", "gzip, deflate");
 #else
-    requestsong.setRawHeader("Accept-Encoding", "josn");   //ok
+    //requestsong.setRawHeader("Accept-Encoding", "josn");   //ok
+    requestsong.setRawHeader("Accept-Encoding", "json");
 #endif
     requestsong.setRawHeader("Accept-Language", "zh-CN,zh;q=0.8");
     requestsong.setRawHeader("Cookie", "usertrack=ezq0allwsCsYiQ/vA1YUAg==");
