@@ -17,14 +17,14 @@ class MainWindow;
 
 typedef struct
 {
-    QString id;
+    unsigned int id;
     QString name;
     QString picUrl;
 }JsonArtist_s;
 
 typedef struct
 {
-    QString id;
+    unsigned int id;
     QString name;
     JsonArtist_s artist;
     QString picUrl;
@@ -32,12 +32,12 @@ typedef struct
 
 typedef struct
 {
-    QString id;
+    unsigned int id;
     QString name;
     QVector<JsonArtist_s> artists;
     JsonAlbum_s album;
     QString audio;
-    QString djProgramId;
+    unsigned int djProgramId;
     QString page;
 }JsonSongArray_s;
 
@@ -60,6 +60,7 @@ public:
     QNetworkAccessManager *m_manager;
     QByteArray gloabUnGzip(QByteArray srcData);
     void analyzeJsonDate(QByteArray jsonData);
+    void test();
     JsonWholeData_s m_jsonDate;
 private slots:
     void slot_replyFinished(QNetworkReply *reply);
