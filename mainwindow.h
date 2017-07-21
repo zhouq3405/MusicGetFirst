@@ -4,14 +4,51 @@
 #include <QMainWindow>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QByteArray>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QUrl>
 #include <QtNetwork/QNetworkReply>
+#include <QVector>
 namespace Ui {
 class MainWindow;
 }
+
+typedef struct
+{
+    QString id;
+    QString name;
+    QString picUrl;
+}JsonArtist_s;
+
+typedef struct
+{
+    QString id;
+    QString name;
+    JsonArtist_s artist;
+    QString picUrl;
+}JsonAlbum_s;
+
+typedef struct
+{
+    QString id;
+    QString name;
+    QVector<JsonArtist_s> artists;
+    JsonAlbum_s album;
+    QString audio;
+    QString djProgramId;
+    QString page;
+}JsonSongArray_s;
+
+
+typedef struct
+{
+    int code;
+    int songCount;
+    QVector<JsonSongArray_s> songs;
+}JsonWholeData_s;
+
 
 class MainWindow : public QMainWindow
 {
@@ -22,6 +59,8 @@ public:
     ~MainWindow();
     QNetworkAccessManager *m_manager;
     QByteArray gloabUnGzip(QByteArray srcData);
+    void analyzeJsonDate(QByteArray jsonData);
+    JsonWholeData_s m_jsonDate;
 private slots:
     void slot_replyFinished(QNetworkReply *reply);
     void on_pushButton_clicked();

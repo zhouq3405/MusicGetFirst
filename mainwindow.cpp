@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QString>
 #include "zlib/include/zconf.h"
-
+#include "zlib/include/zlib.h"
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     m_manager = new QNetworkAccessManager(this);
+
     ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=1&offset=0&callback=loft.w.g.cbFuncSearchMusic");
    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
 }
@@ -20,6 +21,88 @@ MainWindow::~MainWindow()
     delete ui;
 
 }
+
+void MainWindow::analyzeJsonDate(QByteArray jsonData)
+{
+    JsonSongArray_s song;
+    JsonArtist_s artist;
+    QString qJsonDat = QString(jsonData).toLatin1();
+    qDebug()<<qJsonDat;
+    QJsonDocument doc = QJsonDocument::fromJson(jsonData);
+    QJsonObject whole_object = doc.object();
+   // qDebug()<<"res = "<<jsonData;
+    memset(&m_jsonDate, 0x00, sizeof(JsonWholeData_s));
+    int b = m_jsonDate.code = whole_object.value("code").toInt();
+    qDebug()<<"b = "<<b;
+    QJsonObject songInfo = whole_object.value("result").toObject();
+    int k = m_jsonDate.songCount = songInfo.value("songCount").toInt();
+    qDebug()<<"k = "<<k;
+    QJsonArray songArray = songInfo.value("songs").toArray();
+    int arrayCount =songArray.count();
+
+    for (int i = 0; i < arrayCount; i++)
+    {
+        song.id = songArray.at(i).toObject().value("id").toString();
+        song.name = songArray.at(i).toObject().value("name").toString();
+        QJsonArray artistArray = songArray.at(i).toObject().value("artists").toArray();
+        int artistCount = artistArray.count();
+        for (int j = 0; j < artistCount; j++)
+        {
+
+            artist.id = artistArray.at(j).toObject().value("id").toString();
+            artist.name = artistArray.at(j).toObject().value("name").toString();
+            artist.picUrl = artistArray.at(j).toObject().value("picUrl").toString();
+            song.artists << artist;
+        }
+
+        QJsonObject albumInfo = songArray.at(i).toObject().value("album").toObject();
+        song.album.id = albumInfo.value("id").toString();
+        song.album.name = albumInfo.value("name").toString();
+        QJsonObject album_artist = albumInfo.value("artist").toObject();
+        song.album.artist.id = album_artist.value("id").toString();
+        song.album.artist.name = album_artist.value("name").toString();
+        song.album.artist.picUrl = album_artist.value("picUrl").toString();
+
+        song.album.picUrl = albumInfo.value("picUrl").toString();
+
+        song.audio = songArray.at(i).toObject().value("audio").toString();
+        song.djProgramId = songArray.at(i).toObject().value("djProgramId").toString();
+        song.page = songArray.at(i).toObject().value("page").toString();
+
+        m_jsonDate.songs << song;
+    }
+
+
+    qDebug()<<"search results:";
+    qDebug()<<"songCount = "<<m_jsonDate.songCount;
+    qDebug()<<"code ="<<m_jsonDate.code;
+    qDebug()<<"songs:"<<endl;
+    for (int i = 0; i < m_jsonDate.songs.count(); i++)
+    {
+        qDebug()<<"id = "<<m_jsonDate.songs.at(i).id;
+        qDebug()<<"name = "<<m_jsonDate.songs.at(i).name;
+
+        qDebug()<<"artists:"<<endl;  //may has more than two person, need to modify the date struct
+        for (int j = 0; i < m_jsonDate.songs.at(i).artists.count(); j++)
+        {
+            qDebug()<<"id = "<<m_jsonDate.songs.at(i).artists.at(j).id;
+            qDebug()<<"name = "<<m_jsonDate.songs.at(i).artists.at(j).name;
+            qDebug()<<"picUrl = "<<m_jsonDate.songs.at(i).artists.at(j).picUrl;
+        }
+
+
+        qDebug()<<"album:"<<endl;
+
+        qDebug()<<"id = "<<m_jsonDate.songs.at(i).album.id;
+        qDebug()<<"name = "<<m_jsonDate.songs.at(i).album.name;
+        qDebug()<<"album-artist"<<endl;
+        qDebug()<<"id = "<<m_jsonDate.songs.at(i).album.artist.id;
+        qDebug()<<"name = "<<m_jsonDate.songs.at(i).album.artist.name;
+        qDebug()<<"picUrl = "<<m_jsonDate.songs.at(i).album.artist.picUrl;
+        qDebug()<<"picUrl = "<<m_jsonDate.songs.at(i).album.picUrl;
+    }
+}
+
 
 void MainWindow::slot_replyFinished(QNetworkReply *reply)
 {
@@ -109,7 +192,7 @@ void MainWindow::on_pushButton_2_clicked()
     //requestsong.setHeader(QNetworkRequest::ContentDispositionHeader,
     //                      "src=lofter&type=1&filterDj=true&s=" + byt1 + "&limit=1&offset=0&callback=loft.w.g.cbFuncSearchMusic HTTP/1.1");
 
-    requestsong.setUrl(QUrl("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=1&offset=0&callback=loft.w.g.cbFuncSearchMusic"));
+    requestsong.setUrl(QUrl("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=6&offset=0&callback=loft.w.g.cbFuncSearchMusic"));
     //requestsong.setUrl(QUrl(QString(head_arry)));
    // qDebug()<<QUrl(QString(head_arry));
     requestsong.setRawHeader("Host", "s.music.163.com");
@@ -141,8 +224,9 @@ void MainWindow::on_pushButton_2_clicked()
     }
     //reply->deleteLater();
     qDebug()<<"Get Data ok";
-    uncompress();
-    qDebug()<<arry;
+    QByteArray res = gloabUnGzip(arry);
+    //qDebug()<<res;
+    analyzeJsonDate(res);
 }
 
 

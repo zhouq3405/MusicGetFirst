@@ -1,0 +1,40 @@
+"loft.w.g.cbFuncSearchMusic
+(
+	{
+		\"result\":
+		{
+			\"songCount\":64,
+			\"songs\":
+			[
+				{
+					\"id\":28668855,
+					\"name\":\"\xE6\x81\x8B\xE4\xBA\xBA\xE5\xBF\x83\",
+					\"artists\":
+					[
+						{
+							\"id\":9823,
+							\"name\":\"\xE9\xAD\x8F\xE6\x96\xB0\xE9\x9B\xA8\",
+							\"picUrl\":null
+						}
+					],
+					\"album\":
+					{
+						\"id\":2877053,
+						\"name\":\"\xE6\x81\x8B\xE4\xBA\xBA\xE5\xBF\x83\",
+						\"artist\":
+						{
+							\"id\":0,
+							\"name\":\"\",
+							\"picUrl\":null
+						},
+						\"picUrl\":\"http://p1.music.126.net/OX6lR0jEjtxPfIgjVUtWww==/5786729697194540.jpg\"
+					},
+					\"audio\":\"http://m2.music.126.net/p0-voL9bTV1ZpZv3y6OKnQ==/7953867116601804.mp3\",
+					\"djProgramId\":0,
+					\"page\":\"http://music.163.com/m/song/28668855\"
+				}
+			]
+		},
+		\"code\":200
+	}
+)"
