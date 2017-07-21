@@ -60,7 +60,7 @@ public:
     QNetworkAccessManager *m_manager;
     QByteArray gloabUnGzip(QByteArray srcData);
     void analyzeJsonDate(QByteArray jsonData);
-    void test();
+
     JsonWholeData_s m_jsonDate;
 private slots:
     void slot_replyFinished(QNetworkReply *reply);
