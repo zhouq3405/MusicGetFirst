@@ -3,9 +3,11 @@
 #include <QString>
 #include "zlib/include/zconf.h"
 #include "zlib/include/zlib.h"
+#include "vlc/vlc.h"
 
+#define MAX_LIST_NAME 10
 
-#define QDEBUG_ENABLE
+//#define QDEBUG_ENABLE
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -14,8 +16,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     m_manager = new QNetworkAccessManager(this);
-
-    ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0");
+    m_songListModel = new QStandardItemModel;
+    ui->label_2->setText("总计：");
+    //ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0");
    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
 }
 
@@ -138,12 +141,6 @@ void MainWindow::slot_replyFinished(QNetworkReply *reply)
     analyzeJsonDate(arry);
 }
 
-void MainWindow::on_pushButton_clicked()
-{
-    QString str;
-    str = ui->lineEdit->text();
-    m_manager->get(QNetworkRequest(QUrl(str)));
-}
 
 QByteArray MainWindow::gloabUnGzip(QByteArray srcData)
 {
@@ -189,14 +186,16 @@ void MainWindow::on_pushButton_2_clicked()
     QByteArray arry;
     QNetworkRequest requestsong;
     QNetworkAccessManager managersong;
-
+    QString url("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%1&limit=100&offset=0");
+    url = url.arg(ui->lineEdit->text());
 
     //requestsong.setHeader(QNetworkRequest::LocationHeader,
     //                      "src=lofter&type=1&filterDj=true&s=" + byt1 + "&limit=1&offset=0&callback=loft.w.g.cbFuncSearchMusic HTTP/1.1");
 #if 0
     requestsong.setUrl(QUrl("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0&callback=loft.w.g.cbFuncSearchMusic"));
 #else
-    requestsong.setUrl(QUrl("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0"));
+    //requestsong.setUrl(QUrl("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0"));
+    requestsong.setUrl(QUrl(url));
 #endif
     requestsong.setRawHeader("Host", "s.music.163.com");
     requestsong.setRawHeader("Connection", "Keep-Alive");
@@ -243,24 +242,129 @@ void MainWindow::on_pushButton_2_clicked()
 #else
     //QByteArray rearch_dat = QString(res).toUtf8();
 
-    qDebug()<<arry;
+    //qDebug()<<arry;
     analyzeJsonDate(arry);
+    dispSearchRes();
 #endif
 }
 
 
 
+//startIndex就是从搜到的歌曲第几个开始，0为开始
+void MainWindow::dispSearchRes()
+{
+    m_songListModel->setHorizontalHeaderItem(0, new QStandardItem("歌曲名"));
+    m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
+    m_songListModel->setHorizontalHeaderItem(2, new QStandardItem("专辑名"));
+
+    ui->tableView->setModel(m_songListModel);
+
+    ui->tableView->setColumnWidth(0, 200);
+    ui->tableView->setColumnWidth(1, 200);
+    ui->tableView->setColumnWidth(2, 100);
+    //ui->tableView->verticalHeader()->hide();
+
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
+    connect(this, SIGNAL(selectPlay(QModelIndex *)), this, SLOT(startPlaySong(QModelIndex *)));
+
+    for (int i =0; i < m_jsonDate.songs.count(); i++)
+    {
+        m_songListModel->setItem(i, 0, new QStandardItem(m_jsonDate.songs.at(i).name));
+        if (m_jsonDate.songs.at(i).artists.count() > 1)
+        {
+            QString artists;
+            artists.clear();
+            for (int ii = 0; ii < m_jsonDate.songs.at(i).artists.count() && ii < 4; ii++)
+            {
+                artists += m_jsonDate.songs.at(i).artists.at(ii).name + " ";
+
+            }
+            m_songListModel->setItem(i, 1, new QStandardItem(artists));
+        }
+        else
+        {
+            m_songListModel->setItem(i, 1, new QStandardItem(m_jsonDate.songs.at(i).artists.at(0).name));
+        }
+        m_songListModel->setItem(i, 2, new QStandardItem(m_jsonDate.songs.at(i).album.name));
+    }
+    ui->label_2->setText(QString("总计：%1").arg(QString::number(m_jsonDate.songs.count())));
+}
+
+void MainWindow::sendSelectPalySignal(QModelIndex index)
+{
+    emit selectPlay(&index);
+}
 
 
+#if 0
+static void playClickedSong(void *jsData, void *modelIndex)
+{
+    qDebug()<<"3333";
+    JsonWholeData_s *pJsonData = reinterpret_cast<JsonWholeData_s *>(jsData);
+    QModelIndex *index = reinterpret_cast<QModelIndex *>(modelIndex);
+    QString audio_url = pJsonData->songs.at(index->row()).audio;
+    qDebug()<<"播放 ："<<audio_url;
+    libvlc_instance_t * inst;
+    libvlc_media_player_t *mp;
+    libvlc_media_t *m;
+
+    libvlc_time_t length;
+    int width;
+    int height;
+    int wait_time=5000;
+    inst = libvlc_new (0, NULL);
+
+    //m = libvlc_media_new_path (inst, audio_url.toStdString().c_str());
+    m = libvlc_media_new_location(inst, audio_url.toStdString().c_str());
+    //m = libvlc_media_new_path (inst,  "http://m2.music.126.net/I1Nc9fvRtPgeKwpn9BmQ1g==/18534467511105767.mp3");
+    mp = libvlc_media_player_new_from_media (m);
+    /* No need to keep the media now */
+    libvlc_media_release (m);
+
+    // play the media_player
+    libvlc_media_player_play (mp);
+
+    //wait until the tracks are created
+    _sleep (wait_time);
+    length = libvlc_media_player_get_length(mp);
+    width = libvlc_video_get_width(mp);
+    height = libvlc_video_get_height(mp);
+  //  qDebug()<<QString("Stream Duration: %1s").arg(QString::number(length/1000));
+  // printf("Resolution: %d x %d\n",width,height);
+    //Let it play
+    _sleep (length-wait_time);
+
+    // Stop playing
+    libvlc_media_player_stop (mp);
+
+    // Free the media_player
+    libvlc_media_player_release (mp);
+
+    libvlc_release (inst);
+}
+#endif
 
 
+#if 0   //日后研究， 两个类之间的函数的回调，和类型的转换问题
+void MainWindow::startPlaySong(QModelIndex *index)
+{
+   qDebug()<<"44444444";
+   m_threadPlay.setCallbackFunc(playClickedSong, reinterpret_cast<void *>(&m_jsonDate), reinterpret_cast<void *>(index));
+   m_threadPlay.start();
+   qDebug()<<"ssss";
+}
+#else
+void MainWindow::startPlaySong(QModelIndex *index)
+{
+   qDebug()<<"44444444";
+   m_threadPlay.setCallbackFunc(&m_jsonDate, index->row());
+   m_threadPlay.start();
+   qDebug()<<"ssss";
+}
 
-
-
-
-
-
-
+#endif
 
 
 

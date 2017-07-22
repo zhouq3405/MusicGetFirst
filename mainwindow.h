@@ -11,43 +11,17 @@
 #include <QUrl>
 #include <QtNetwork/QNetworkReply>
 #include <QVector>
+#include "songlistitem.h"
+#include "pleycontrolbar.h"
+#include <QStandardItemModel>
+#include "mythread.h"
+
+
 namespace Ui {
 class MainWindow;
 }
 
-typedef struct
-{
-    unsigned int id;
-    QString name;
-    QString picUrl;
-}JsonArtist_s;
 
-typedef struct
-{
-    unsigned int id;
-    QString name;
-    JsonArtist_s artist;
-    QString picUrl;
-}JsonAlbum_s;
-
-typedef struct
-{
-    unsigned int id;
-    QString name;
-    QVector<JsonArtist_s> artists;
-    JsonAlbum_s album;
-    QString audio;
-    unsigned int djProgramId;
-    QString page;
-}JsonSongArray_s;
-
-
-typedef struct
-{
-    int code;
-    int songCount;
-    QVector<JsonSongArray_s> songs;
-}JsonWholeData_s;
 
 
 class MainWindow : public QMainWindow
@@ -60,16 +34,24 @@ public:
     QNetworkAccessManager *m_manager;
     QByteArray gloabUnGzip(QByteArray srcData);
     void analyzeJsonDate(QByteArray jsonData);
-
+    void dispSearchRes();
+    //void startPlaySong();
+    //static void playClickedSong(void *arg); //作为函数指针参数， 需要时static的，相当于是一般的函数
     JsonWholeData_s m_jsonDate;
+    MyThread m_threadPlay;
+
+
+signals:
+    void selectPlay(QModelIndex *);
+
 private slots:
     void slot_replyFinished(QNetworkReply *reply);
-    void on_pushButton_clicked();
-
+    void sendSelectPalySignal(QModelIndex);
     void on_pushButton_2_clicked();
-
+    void startPlaySong(QModelIndex *index);
 private:
     Ui::MainWindow *ui;
+    QStandardItemModel *m_songListModel;
 };
 
 #endif // MAINWINDOW_H

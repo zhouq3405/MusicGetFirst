@@ -11,7 +11,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = MusicGetFirst
 TEMPLATE = app
 
+INCLUDEPATH += $$PWD/vlc/
 LIBS += -L$$PWD/zlib/lib -lzlibstatic
+LIBS += -L$$PWD/vlc/lib -lvlccore -lvlc
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
@@ -27,7 +29,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    songlistitem.cpp \
+    pleycontrolbar.cpp \
+    songlistview.cpp \
+    mythread.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -41,9 +47,15 @@ HEADERS += \
     zlib/include/trees.h \
     zlib/include/zconf.h \
     zlib/include/zlib.h \
-    zlib/include/zutil.h
+    zlib/include/zutil.h \
+    songlistitem.h \
+    pleycontrolbar.h \
+    songlistview.h \
+    mythread.h
 
 
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    songlistitem.ui \
+    pleycontrolbar.ui
