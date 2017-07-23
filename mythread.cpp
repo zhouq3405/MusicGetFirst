@@ -25,7 +25,7 @@ MyThread::~MyThread()
     }
 }
 
-void MyThread::setCallbackFunc(JsonWholeData_s *jsonDat, int index)
+void MyThread::setCallbackFunc(JsonWholeData_s *jsonDat, int index, int currVolValue)
 {
 #if 0
     m_thread_callback_func = func;
@@ -34,6 +34,7 @@ void MyThread::setCallbackFunc(JsonWholeData_s *jsonDat, int index)
 #endif
     m_pJsonData = jsonDat;
     m_selectSongIndex = index;
+    m_currVolValue = currVolValue;
 }
 
 
@@ -75,6 +76,13 @@ int MyThread::playClickedSong()
 
         //wait until the tracks are created
         //_sleep (wait_time);
+        if (libvlc_audio_set_volume(m_mediaPlayer, m_currVolValue) == -1)
+        {
+            libvlc_media_player_release(m_mediaPlayer);
+            m_mediaPlayer = NULL;
+            emit playFailed();    //播放出错
+            return -1;
+        }
         msleep(1000);
         m_mediaLen = libvlc_media_player_get_length(m_mediaPlayer);
         if (m_mediaLen == -1)
@@ -110,7 +118,7 @@ int MyThread::playClickedSong()
             //qDebug()<<"当前pos :"<<m_currentPos;
             emit reportCurPos(m_currentPos);
        }
-       this->msleep(500);
+       this->msleep(1000);
     }
     qDebug()<<"here exit run";
 
@@ -207,4 +215,20 @@ int MyThread::changeVol(int value)
     return 0;
 }
 
+QString MyThread::formatMediaTime(long long ms)
+{
+    int hours = 0;
+    int mins = 0;
+    int secs = 0;
+    if (ms == 0 || ms < 0)
+    {
+        return QString("00:00:00");
+    }
 
+    hours = ms / (3600*1000);
+    ms -= hours*(3600*1000);
+    mins = ms / (60*1000);
+    ms -= mins*(60*1000);
+    secs = ms / (1000);
+    return QString("%1:%2:%3").arg(QString::number(hours), 2, '0').arg(QString::number(mins), 2, '0').arg(QString::number(secs), 2, '0');
+}

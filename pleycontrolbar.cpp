@@ -51,7 +51,7 @@ void PleyControlBar::on_pushButton_3_clicked()
 
 
 //调整进度
-void PleyControlBar::on_horizontalSlider_valueChanged(int value)
+void PleyControlBar::on_horizontalSlider_sliderMoved(int value)
 {
     qDebug()<<"进度调整: "<<value;
     emit changeProcess(value);
@@ -83,7 +83,7 @@ int PleyControlBar::setVolBarVal(int value)
     {
         value = 100;
     }
-    ui->horizontalSlider->setValue(value);
+    ui->verticalSlider->setValue(value);
     return 0;
 }
 
@@ -98,7 +98,7 @@ int PleyControlBar::setProcessBarVal(int value)
     {
         value = 100;
     }
-    ui->verticalSlider->setValue(value);
+    ui->horizontalSlider->setValue(value);
     return 0;
 }
 

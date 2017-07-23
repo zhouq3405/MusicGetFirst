@@ -58,11 +58,14 @@ private slots:
     void slot_changePlayProcess(int value);
     void slot_changeVol(int value);
     void slot_startLoadNetPic(QNetworkReply *reply);
+    void slot_updateProcessBar(long long ms_t);
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *m_songListModel;
     int m_currSelectSongIndex;
     int m_isPause;
+    int m_currVolValue;
+
 
 
 };

@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_isPause = 1;
 
     ui->playcontrolbar->setVolBarVal(50);
+    m_currVolValue = 50;
     ui->playcontrolbar->setProcessBarVal(50);
     ui->playcontrolbar->setPicLabel(QPixmap(":/image/playIcon"));
     ui->playcontrolbar->setSongName("未知");
@@ -33,8 +34,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
     m_songListModel->setHorizontalHeaderItem(2, new QStandardItem("专辑名"));
     ui->tableView->setColumnWidth(0, 200);
-    ui->tableView->setColumnWidth(1, 200);
+    ui->tableView->setColumnWidth(1, 300);
     ui->tableView->setColumnWidth(2, 100);
+    ui->tableView->horizontalHeader()->setStretchLastSection(true);
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(startPlaySong(QModelIndex)));
@@ -53,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(ui->playcontrolbar, SIGNAL(play_or_pause()), this, SLOT(slot_play_or_pause()));
    connect(ui->playcontrolbar, SIGNAL(changeProcess(int)), this, SLOT(slot_changePlayProcess(int)));
    connect(ui->playcontrolbar, SIGNAL(changeVol(int)), this, SLOT(slot_changeVol(int)));
-
+   connect(m_threadPlay, SIGNAL(reportCurPos(long long)), this, SLOT(slot_updateProcessBar(long long)));
 }
 
 MainWindow::~MainWindow()
@@ -410,7 +412,7 @@ void MainWindow::startPlaySong(QModelIndex index)
    }
    else
    {
-       m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex);
+       m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex, m_currVolValue);
        m_threadPlay->start();
        qDebug()<<"ssss";
    }
@@ -428,7 +430,7 @@ void MainWindow::waitPlayThreadStop()
     disconnect(m_threadPlay, SIGNAL(stopFinished()), this, SLOT(waitPlayThreadStop()));
     if (!m_threadPlay->isRunning())  //只有一个线程维持播放， 放下一首的时候必须先退出线程，释放资源后再启动线程
     {
-        m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex);
+        m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex, m_currVolValue);
         m_threadPlay->start();
     }
 }
@@ -507,6 +509,7 @@ void MainWindow::slot_changeVol(int value)
     if (m_threadPlay->isRunning())
     {
         m_threadPlay->changeVol(value);
+        m_currVolValue = value;
     }
 }
 
@@ -523,4 +526,19 @@ void MainWindow::slot_startLoadNetPic(QNetworkReply *reply)
 
 
 
+void MainWindow::slot_updateProcessBar(long long ms_t)
+{
 
+    if (m_threadPlay->getTotalLen() != 0)
+    {
+        //qDebug()<<"disp ms = "<<ms_t;
+        QString dispStr = m_threadPlay->formatMediaTime(ms_t) + "/" + m_threadPlay->formatMediaTime(m_threadPlay->getTotalLen());
+       //qDebug()<< "dispStr:"<<dispStr;
+        ui->playcontrolbar->setPlayInfo(dispStr);
+        ui->playcontrolbar->setProcessBarVal(100*((double)ms_t / m_threadPlay->getTotalLen()));
+    }
+    else
+    {
+        ui->playcontrolbar->setPlayInfo("未知");
+    }
+}

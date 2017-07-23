@@ -21,7 +21,7 @@ public:
 #if 0
     void setCallbackFunc(MyThread_CALLBACK_FUNC func, void *arg1, void *arg2);
 #else
-    void setCallbackFunc(JsonWholeData_s *jsData, int index); 
+    void setCallbackFunc(JsonWholeData_s *jsData, int index, int currVolValue);
 #endif
     int pauseOrRunPlaying(int status);
     int stopPlaying();
@@ -29,6 +29,7 @@ public:
     int changeVol(int value);
     libvlc_time_t getTotalLen();
     libvlc_time_t getCurrentPos();
+    QString formatMediaTime(long long ms);
 protected:
     void run();
     int playClickedSong();
@@ -37,7 +38,7 @@ signals:
     void stopFinished();
     void urlInvalid();
     void playFailed();
-    void reportCurPos(libvlc_time_t pos);
+    void reportCurPos(long long pos);
 private slots:
     void slot_stopPlayThread();
 
@@ -51,6 +52,7 @@ private:
     int m_isRunning;
 
     int m_selectSongIndex;
+    int m_currVolValue;
 #if 0
     MyThread_CALLBACK_FUNC m_thread_callback_func;
     void *m_thread_callback_arg1;
