@@ -19,7 +19,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     m_threadPlay = new MyThread(this);
     m_manager = new QNetworkAccessManager(this);
+
     m_songListModel = new QStandardItemModel;
+    m_isPause = 1;
+
+    ui->playcontrolbar->setVolBarVal(50);
+    ui->playcontrolbar->setProcessBarVal(50);
 
     m_songListModel->setHorizontalHeaderItem(0, new QStandardItem("歌曲名"));
     m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
@@ -38,6 +43,13 @@ MainWindow::MainWindow(QWidget *parent) :
    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
    connect(m_threadPlay, SIGNAL(urlInvalid()), this, SLOT(songUrlInvalid()));
    connect(m_threadPlay, SIGNAL(playFailed()), this, SLOT(vlcParseMediaFailed()));
+
+   connect(ui->playcontrolbar, SIGNAL(next()), this, SLOT(slot_playNext()));
+   connect(ui->playcontrolbar, SIGNAL(previous()), this, SLOT(slot_playPre()));
+   connect(ui->playcontrolbar, SIGNAL(play_or_pause()), this, SLOT(slot_play_or_pause()));
+   connect(ui->playcontrolbar, SIGNAL(changeProcess(int)), this, SLOT(slot_changePlayProcess(int)));
+   connect(ui->playcontrolbar, SIGNAL(changeVol(int)), this, SLOT(slot_changeVol(int)));
+
 }
 
 MainWindow::~MainWindow()
@@ -415,7 +427,48 @@ void MainWindow::vlcParseMediaFailed()
 
 
 
+void MainWindow::slot_playNext()
+{
 
+}
+
+void MainWindow::slot_playPre()
+{
+
+}
+
+void MainWindow::slot_play_or_pause()
+{
+    if (m_threadPlay->isRunning())
+    {
+        if (m_isPause)
+        {
+            ui->playcontrolbar->setPlayOrPauseText("播放");
+        }
+        else
+        {
+            ui->playcontrolbar->setPlayOrPauseText("暂停");
+        }
+        m_isPause = !m_isPause;
+        m_threadPlay->pauseOrRunPlaying(m_isPause);
+    }
+}
+
+void MainWindow::slot_changePlayProcess(int value)
+{
+    if (m_threadPlay->isRunning())
+    {
+        m_threadPlay->seekPlaying(value);
+    }
+}
+
+void MainWindow::slot_changeVol(int value)
+{
+    if (m_threadPlay->isRunning())
+    {
+        m_threadPlay->changeVol(value);
+    }
+}
 
 
 

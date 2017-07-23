@@ -15,12 +15,13 @@ public:
     explicit PleyControlBar(QWidget *parent = 0);
     ~PleyControlBar();
     int m_isPlaying;
-
-
+    int setPlayOrPauseText(QString str);
+    int setVolBarVal(int value);
+    int setProcessBarVal(int value);
 
 
 signals:
-    void play_pause(int status);
+    void play_or_pause();
     void next();
     void previous();
     void changeProcess(int time);

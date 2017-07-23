@@ -27,6 +27,7 @@ void PleyControlBar::on_pushButton_clicked()
 //播放
 void PleyControlBar::on_pushButton_2_clicked()
 {
+#if 0
     qDebug()<<"播放/暂停";
     m_isPlaying = !m_isPlaying;
     if (m_isPlaying)
@@ -37,7 +38,8 @@ void PleyControlBar::on_pushButton_2_clicked()
     {
         ui->pushButton_2->setText("暂停");
     }
-    emit play_pause(m_isPlaying);
+#endif
+    emit play_or_pause();
 }
 
 //下一首
@@ -61,4 +63,41 @@ void PleyControlBar::on_verticalSlider_valueChanged(int value)
 {
     qDebug()<<"音量调整："<<value;
     emit changeVol(value);
+}
+
+
+int PleyControlBar::setPlayOrPauseText(QString str)
+{
+    ui->pushButton_2->setText(str);
+}
+
+
+int PleyControlBar::setVolBarVal(int value)
+{
+    if (value < 0)
+    {
+        value = 0;
+    }
+
+    if (value > 100)
+    {
+        value = 100;
+    }
+    ui->horizontalSlider->setValue(value);
+    return 0;
+}
+
+int PleyControlBar::setProcessBarVal(int value)
+{
+    if (value < 0)
+    {
+        value = 0;
+    }
+
+    if (value > 100)
+    {
+        value = 100;
+    }
+    ui->verticalSlider->setValue(value);
+    return 0;
 }

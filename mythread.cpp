@@ -198,6 +198,13 @@ libvlc_time_t MyThread::getCurrentPos()
     return m_currentPos;
 }
 
-
+int MyThread::changeVol(int value)
+{
+    if (m_mediaPlayer)
+    {
+        libvlc_audio_set_volume(m_mediaPlayer, value);
+    }
+    return 0;
+}
 
 

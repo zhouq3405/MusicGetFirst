@@ -26,6 +26,7 @@ public:
     int pauseOrRunPlaying(int status);
     int stopPlaying();
     int seekPlaying(int offset);
+    int changeVol(int value);
     libvlc_time_t getTotalLen();
     libvlc_time_t getCurrentPos();
 protected:

@@ -52,10 +52,16 @@ private slots:
     void waitPlayThreadStop();
     void songUrlInvalid();
     void vlcParseMediaFailed();
+    void slot_playNext();
+    void slot_playPre();
+    void slot_play_or_pause();
+    void slot_changePlayProcess(int value);
+    void slot_changeVol(int value);
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *m_songListModel;
     int m_currSelectSongIndex;
+    int m_isPause;
 
 };
 
