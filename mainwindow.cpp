@@ -4,6 +4,8 @@
 #include "zlib/include/zconf.h"
 #include "zlib/include/zlib.h"
 #include "vlc/vlc.h"
+#include <QMessageBox>
+
 
 #define MAX_LIST_NAME 10
 
@@ -15,11 +17,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    m_threadPlay = new MyThread(this);
     m_manager = new QNetworkAccessManager(this);
     m_songListModel = new QStandardItemModel;
     ui->label_2->setText("总计：");
     //ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0");
    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
+   connect(m_threadPlay, SIGNAL(urlInvalid()), this, SLOT(songUrlInvalid()));
+   connect(m_threadPlay, SIGNAL(playFailed()), this, SLOT(vlcParseMediaFailed()));
 }
 
 MainWindow::~MainWindow()
@@ -267,6 +272,7 @@ void MainWindow::dispSearchRes()
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
+    //connect(ui->tableView, SIGNAL(clicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
     connect(this, SIGNAL(selectPlay(QModelIndex *)), this, SLOT(startPlaySong(QModelIndex *)));
 
     for (int i =0; i < m_jsonDate.songs.count(); i++)
@@ -294,6 +300,9 @@ void MainWindow::dispSearchRes()
 
 void MainWindow::sendSelectPalySignal(QModelIndex index)
 {
+    //去抖动，防止重复信号
+    if (m_currSelectSongIndex == index.row())
+        return ;
     emit selectPlay(&index);
 }
 
@@ -351,26 +360,55 @@ static void playClickedSong(void *jsData, void *modelIndex)
 void MainWindow::startPlaySong(QModelIndex *index)
 {
    qDebug()<<"44444444";
-   m_threadPlay.setCallbackFunc(playClickedSong, reinterpret_cast<void *>(&m_jsonDate), reinterpret_cast<void *>(index));
-   m_threadPlay.start();
+   m_threadPlay->setCallbackFunc(playClickedSong, reinterpret_cast<void *>(&m_jsonDate), reinterpret_cast<void *>(index));
+   m_threadPlay->start();
    qDebug()<<"ssss";
 }
 #else
 void MainWindow::startPlaySong(QModelIndex *index)
 {
    qDebug()<<"44444444";
-   m_threadPlay.setCallbackFunc(&m_jsonDate, index->row());
-   m_threadPlay.start();
-   qDebug()<<"ssss";
+#if 0
+   m_currSelectSongIndex = index->row();
+   if (m_threadPlay->isRunning())
+   {
+       qDebug()<<"5555";
+       connect(m_threadPlay, SIGNAL(stopFinished()), this, SLOT(waitPlayThreadStop()));
+       m_threadPlay->stopPlaying();
+   }
+   else
+   {
+       m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex);
+       m_threadPlay->start();
+       qDebug()<<"ssss";
+   }
+#endif
 }
 
 #endif
 
 
+void MainWindow::waitPlayThreadStop()
+{
+    qDebug()<<"start other";
+    disconnect(m_threadPlay, SIGNAL(stopFinished()), this, SLOT(waitPlayThreadStop()));
+    if (!m_threadPlay->isRunning())  //只有一个线程维持播放， 放下一首的时候必须先退出线程，释放资源后再启动线程
+    {
+        m_threadPlay->setCallbackFunc(&m_jsonDate, m_currSelectSongIndex);
+        m_threadPlay->start();
+    }
+}
 
 
+void MainWindow::songUrlInvalid()
+{
+    QMessageBox::information(this, "网络错误", "获取该网络资源出错，请尝试其他歌曲");
+}
 
-
+void MainWindow::vlcParseMediaFailed()
+{
+    QMessageBox::information(this, "解码", "媒体解析错误");
+}
 
 
 

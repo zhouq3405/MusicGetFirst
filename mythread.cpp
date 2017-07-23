@@ -2,11 +2,13 @@
 
 
 #include <QModelIndex>
-MyThread::MyThread()
+MyThread::MyThread(QObject *parent) : QThread(parent)
 {
     m_vlc_init = libvlc_new (0, NULL);
     m_pJsonData = NULL;
     m_selectSongIndex = 0;
+    m_currentPos = 0;
+    m_isRunning = 0;
 }
 
 MyThread::~MyThread()
@@ -29,43 +31,54 @@ void MyThread::setCallbackFunc(JsonWholeData_s *jsonDat, int index)
 }
 
 
-void MyThread::playClickedSong()
+int MyThread::playClickedSong()
 {
-    qDebug()<<"3333";
-    //JsonWholeData_s *pJsonData = reinterpret_cast<JsonWholeData_s *>(jsData);
-    //QModelIndex *index = reinterpret_cast<QModelIndex *>(modelIndex);
-   // QString audio_url = jsData->songs.at(modelIndex->row()).audio;
     QString audio_url = m_pJsonData->songs.at(m_selectSongIndex).audio;
     qDebug()<<"播放 ："<<audio_url;
 
-    libvlc_time_t length;
-    int width;
-    int height;
+
     int wait_time=5000;
 
     if (m_vlc_init)
     {
-        //m = libvlc_media_new_path (inst, audio_url.toStdString().c_str());
+
         m_media_t = libvlc_media_new_location(m_vlc_init, audio_url.toStdString().c_str());
-        //m = libvlc_media_new_path (inst,  "http://m2.music.126.net/I1Nc9fvRtPgeKwpn9BmQ1g==/18534467511105767.mp3");
+        if (m_media_t == NULL)
+        {
+            emit urlInvalid();    //网址无效
+            return -1;  //error
+        }
+
         m_mediaPlayer = libvlc_media_player_new_from_media (m_media_t);
         /* No need to keep the media now */
         libvlc_media_release (m_media_t);
 
         // play the media_player
-        libvlc_media_player_play (m_mediaPlayer);
+        if (libvlc_media_player_play (m_mediaPlayer) == -1)
+        {
+            libvlc_media_player_release(m_mediaPlayer);
+            m_mediaPlayer = NULL;
+            emit playFailed();    //播放出错
+            return -1;
+        }
 
         //wait until the tracks are created
         _sleep (wait_time);
-        length = libvlc_media_player_get_length(m_mediaPlayer);
-        width = libvlc_video_get_width(m_mediaPlayer);
-        height = libvlc_video_get_height(m_mediaPlayer);
+        m_mediaLen = libvlc_media_player_get_length(m_mediaPlayer);
 
-        //Let it play
-        _sleep (length-wait_time);
-
-
+        qDebug()<<"length (ms) = "<<m_mediaLen;
     }
+    m_isRunning = 1;
+    while(m_isRunning)
+    {
+       if (m_mediaPlayer)
+       {
+            m_currentPos = libvlc_media_player_get_time(m_mediaPlayer);
+            emit reportCurPos(m_currentPos);
+       }
+       this->msleep(500);
+    }
+    qDebug()<<"here exit run";
 
 }
 
@@ -80,6 +93,7 @@ void MyThread::run()
 #else
     if (m_pJsonData)
     {
+
         playClickedSong();
     }
 #endif
@@ -97,4 +111,58 @@ void MyThread::slot_stopPlayThread()
         libvlc_media_player_release (m_mediaPlayer);
     }
 }
+
+
+
+int MyThread::pauseOrRunPlaying(int status)
+{
+    if (m_mediaPlayer)
+    {
+        libvlc_media_player_set_pause(m_mediaPlayer, status);
+    }
+    return 0;
+}
+
+int MyThread::stopPlaying()
+{
+    if (m_mediaPlayer)
+    {
+         m_isRunning = 0;
+         libvlc_media_player_stop(m_mediaPlayer);
+         msleep(500);
+         qDebug()<<"6666";
+         emit stopFinished();
+    }
+    return 0;
+}
+
+
+//offset is 0~100
+int MyThread::seekPlaying(int offset)
+{
+    float offset_t = offset;
+    libvlc_time_t real_offset;
+    if (offset_t > 100)
+        return -1;
+    real_offset = m_mediaLen * (offset_t / 100);
+    if (m_mediaPlayer)
+    {
+        libvlc_media_player_set_time(m_mediaPlayer, real_offset);
+    }
+    return 0;
+}
+
+libvlc_time_t MyThread::getTotalLen()
+{
+    return m_mediaLen;
+}
+
+
+libvlc_time_t MyThread::getCurrentPos()
+{
+    return m_currentPos;
+}
+
+
+
 

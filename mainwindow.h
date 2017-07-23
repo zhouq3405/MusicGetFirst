@@ -12,7 +12,7 @@
 #include <QtNetwork/QNetworkReply>
 #include <QVector>
 #include "songlistitem.h"
-#include "pleycontrolbar.h"
+#include "playcontrolbar.h"
 #include <QStandardItemModel>
 #include "mythread.h"
 
@@ -38,7 +38,7 @@ public:
     //void startPlaySong();
     //static void playClickedSong(void *arg); //作为函数指针参数， 需要时static的，相当于是一般的函数
     JsonWholeData_s m_jsonDate;
-    MyThread m_threadPlay;
+    MyThread *m_threadPlay;
 
 
 signals:
@@ -49,9 +49,14 @@ private slots:
     void sendSelectPalySignal(QModelIndex);
     void on_pushButton_2_clicked();
     void startPlaySong(QModelIndex *index);
+    void waitPlayThreadStop();
+    void songUrlInvalid();
+    void vlcParseMediaFailed();
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *m_songListModel;
+    int m_currSelectSongIndex;
+
 };
 
 #endif // MAINWINDOW_H
