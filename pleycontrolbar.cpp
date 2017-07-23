@@ -101,3 +101,21 @@ int PleyControlBar::setProcessBarVal(int value)
     ui->verticalSlider->setValue(value);
     return 0;
 }
+
+int PleyControlBar::setSongName(QString str)
+{
+    ui->labelSong->setText(str);
+}
+
+int PleyControlBar::setPlayInfo(QString str)
+{
+    ui->labelProcess->setText(str);
+}
+
+
+int PleyControlBar::setPicLabel(QPixmap pix)
+{
+    ui->picLabel->setScaledContents(true);
+    ui->picLabel->setPixmap(pix);
+
+}

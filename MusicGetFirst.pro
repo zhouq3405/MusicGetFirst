@@ -59,3 +59,6 @@ FORMS += \
         mainwindow.ui \
     songlistitem.ui \
     pleycontrolbar.ui
+
+RESOURCES += \
+    imageres.qrc

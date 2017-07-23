@@ -57,11 +57,13 @@ private slots:
     void slot_play_or_pause();
     void slot_changePlayProcess(int value);
     void slot_changeVol(int value);
+    void slot_startLoadNetPic(QNetworkReply *reply);
 private:
     Ui::MainWindow *ui;
     QStandardItemModel *m_songListModel;
     int m_currSelectSongIndex;
     int m_isPause;
+
 
 };
 

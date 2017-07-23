@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QDebug>
+#include <QPixmap>
 namespace Ui {
 class PleyControlBar;
 }
@@ -18,8 +19,9 @@ public:
     int setPlayOrPauseText(QString str);
     int setVolBarVal(int value);
     int setProcessBarVal(int value);
-
-
+    int setPicLabel(QPixmap pix);
+    int setSongName(QString str);
+    int setPlayInfo(QString str);
 signals:
     void play_or_pause();
     void next();

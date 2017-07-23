@@ -9,7 +9,7 @@
 
 #define MAX_LIST_NAME 10
 
-//#define QDEBUG_ENABLE
+#define QDEBUG_ENABLE
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->playcontrolbar->setVolBarVal(50);
     ui->playcontrolbar->setProcessBarVal(50);
+    ui->playcontrolbar->setPicLabel(QPixmap(":/image/playIcon"));
+    ui->playcontrolbar->setSongName("未知");
+    ui->playcontrolbar->setPlayInfo("未知");
 
     m_songListModel->setHorizontalHeaderItem(0, new QStandardItem("歌曲名"));
     m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
@@ -40,7 +43,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->label_2->setText("总计：");
     //ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0");
-   connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
+   //connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
+   connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_startLoadNetPic(QNetworkReply*)));
    connect(m_threadPlay, SIGNAL(urlInvalid()), this, SLOT(songUrlInvalid()));
    connect(m_threadPlay, SIGNAL(playFailed()), this, SLOT(vlcParseMediaFailed()));
 
@@ -383,6 +387,19 @@ void MainWindow::startPlaySong(QModelIndex index)
 {
    qDebug()<<"44444444";
    m_currSelectSongIndex = index.row();
+
+   ui->playcontrolbar->setProcessBarVal(0);
+   ui->playcontrolbar->setSongName(m_jsonDate.songs.at(m_currSelectSongIndex).name);
+   //请求网络图片
+  QNetworkRequest request;
+  QString url = m_jsonDate.songs.at(m_currSelectSongIndex).album.picUrl;
+  if (!url.isEmpty())
+  {
+    qDebug()<<"请求图片："<<url;
+    request.setUrl(QUrl(url));
+    m_manager->get(request);
+  }
+
 #if 1
 
    if (m_threadPlay->isRunning())
@@ -397,6 +414,8 @@ void MainWindow::startPlaySong(QModelIndex index)
        m_threadPlay->start();
        qDebug()<<"ssss";
    }
+
+
 #endif
 }
 
@@ -470,7 +489,16 @@ void MainWindow::slot_changeVol(int value)
     }
 }
 
-
+void MainWindow::slot_startLoadNetPic(QNetworkReply *reply)
+{
+    if (reply->error() == QNetworkReply::NoError)
+    {
+        QByteArray picDat = reply->readAll();
+        QPixmap pixmap;
+        pixmap.loadFromData(picDat);
+        ui->playcontrolbar->setPicLabel(pixmap);
+    }
+}
 
 
 
