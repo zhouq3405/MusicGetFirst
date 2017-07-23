@@ -458,6 +458,7 @@ void MainWindow::slot_playPre()
 
 void MainWindow::slot_play_or_pause()
 {
+#if 0
     if (m_threadPlay->isRunning())
     {
         if (m_isPause)
@@ -471,6 +472,26 @@ void MainWindow::slot_play_or_pause()
         m_isPause = !m_isPause;
         m_threadPlay->pauseOrRunPlaying(m_isPause);
     }
+#else
+    if (m_threadPlay->isRunning())
+    {
+        if (m_isPause)
+        {
+            ui->playcontrolbar->setPlayButtonStyleSheet(QString("QPushButton{border-image:url(:/image/start.png);}"));
+            //ui->playcontrolbar->setPlayOrPauseText("播放");
+        }
+        else
+        {
+            ui->playcontrolbar->setPlayButtonStyleSheet(QString("QPushButton{border-image:url(:/image/pause.png);}"));
+            //ui->playcontrolbar->setPlayOrPauseText("暂停");
+        }
+        m_isPause = !m_isPause;
+        m_threadPlay->pauseOrRunPlaying(m_isPause);
+    }
+
+
+
+#endif
 }
 
 void MainWindow::slot_changePlayProcess(int value)

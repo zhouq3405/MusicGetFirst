@@ -22,6 +22,7 @@ public:
     int setPicLabel(QPixmap pix);
     int setSongName(QString str);
     int setPlayInfo(QString str);
+    int setPlayButtonStyleSheet(QString str);
 signals:
     void play_or_pause();
     void next();

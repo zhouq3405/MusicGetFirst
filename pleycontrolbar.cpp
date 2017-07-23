@@ -7,7 +7,7 @@ PleyControlBar::PleyControlBar(QWidget *parent) :
 {
     ui->setupUi(this);
     m_isPlaying = 0;
-    ui->pushButton_2->setText("播放");
+    //ui->pushButton_2->setText("播放");
     ui->horizontalSlider->setRange(0,100);
     ui->verticalSlider->setRange(0, 100);
 }
@@ -119,3 +119,11 @@ int PleyControlBar::setPicLabel(QPixmap pix)
     ui->picLabel->setPixmap(pix);
 
 }
+
+
+int PleyControlBar::setPlayButtonStyleSheet(QString str)
+{
+    ui->pushButton_2->setStyleSheet(str);
+}
+
+
