@@ -12,7 +12,7 @@
 #include <QtNetwork/QNetworkReply>
 #include <QVector>
 #include "songlistitem.h"
-#include "playcontrolbar.h"
+#include "pleycontrolbar.h"
 #include <QStandardItemModel>
 #include "mythread.h"
 
@@ -46,9 +46,9 @@ signals:
 
 private slots:
     void slot_replyFinished(QNetworkReply *reply);
-    void sendSelectPalySignal(QModelIndex);
+
     void on_pushButton_2_clicked();
-    void startPlaySong(QModelIndex *index);
+    void startPlaySong(QModelIndex index);
     void waitPlayThreadStop();
     void songUrlInvalid();
     void vlcParseMediaFailed();

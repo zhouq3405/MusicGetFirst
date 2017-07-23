@@ -20,6 +20,19 @@ MainWindow::MainWindow(QWidget *parent) :
     m_threadPlay = new MyThread(this);
     m_manager = new QNetworkAccessManager(this);
     m_songListModel = new QStandardItemModel;
+
+    m_songListModel->setHorizontalHeaderItem(0, new QStandardItem("歌曲名"));
+    m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
+    m_songListModel->setHorizontalHeaderItem(2, new QStandardItem("专辑名"));
+    ui->tableView->setColumnWidth(0, 200);
+    ui->tableView->setColumnWidth(1, 200);
+    ui->tableView->setColumnWidth(2, 100);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(startPlaySong(QModelIndex)));
+    //ui->tableView->verticalHeader()->hide();
+    ui->tableView->setModel(m_songListModel);
+
     ui->label_2->setText("总计：");
     //ui->lineEdit->setText("http://s.music.163.com/search/get/?src=lofter&type=1&filterDj=true&s=%E6%81%8B%E4%BA%BA%E5%BF%83&limit=100&offset=0");
    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(slot_replyFinished(QNetworkReply*)));
@@ -258,52 +271,41 @@ void MainWindow::on_pushButton_2_clicked()
 //startIndex就是从搜到的歌曲第几个开始，0为开始
 void MainWindow::dispSearchRes()
 {
-    m_songListModel->setHorizontalHeaderItem(0, new QStandardItem("歌曲名"));
-    m_songListModel->setHorizontalHeaderItem(1, new QStandardItem("歌手名"));
-    m_songListModel->setHorizontalHeaderItem(2, new QStandardItem("专辑名"));
 
-    ui->tableView->setModel(m_songListModel);
-
-    ui->tableView->setColumnWidth(0, 200);
-    ui->tableView->setColumnWidth(1, 200);
-    ui->tableView->setColumnWidth(2, 100);
-    //ui->tableView->verticalHeader()->hide();
-
-    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    connect(ui->tableView, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
-    //connect(ui->tableView, SIGNAL(clicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
-    connect(this, SIGNAL(selectPlay(QModelIndex *)), this, SLOT(startPlaySong(QModelIndex *)));
-
-    for (int i =0; i < m_jsonDate.songs.count(); i++)
+    if (m_jsonDate.songs.count() != 0)
     {
-        m_songListModel->setItem(i, 0, new QStandardItem(m_jsonDate.songs.at(i).name));
-        if (m_jsonDate.songs.at(i).artists.count() > 1)
-        {
-            QString artists;
-            artists.clear();
-            for (int ii = 0; ii < m_jsonDate.songs.at(i).artists.count() && ii < 4; ii++)
-            {
-                artists += m_jsonDate.songs.at(i).artists.at(ii).name + " ";
 
-            }
-            m_songListModel->setItem(i, 1, new QStandardItem(artists));
-        }
-        else
+
+        //connect(ui->tableView, SIGNAL(clicked(QModelIndex)), this, SLOT(sendSelectPalySignal(QModelIndex)));
+       // connect(this, SIGNAL(selectPlay(QModelIndex *)), this, SLOT(startPlaySong(QModelIndex *)));
+
+        for (int i =0; i < m_jsonDate.songs.count(); i++)
         {
-            m_songListModel->setItem(i, 1, new QStandardItem(m_jsonDate.songs.at(i).artists.at(0).name));
+            m_songListModel->setItem(i, 0, new QStandardItem(m_jsonDate.songs.at(i).name));
+            if (m_jsonDate.songs.at(i).artists.count() > 1)
+            {
+                QString artists;
+                artists.clear();
+                for (int ii = 0; ii < m_jsonDate.songs.at(i).artists.count() && ii < 4; ii++)
+                {
+                    artists += m_jsonDate.songs.at(i).artists.at(ii).name + " ";
+
+                }
+                m_songListModel->setItem(i, 1, new QStandardItem(artists));
+            }
+            else
+            {
+                m_songListModel->setItem(i, 1, new QStandardItem(m_jsonDate.songs.at(i).artists.at(0).name));
+            }
+            m_songListModel->setItem(i, 2, new QStandardItem(m_jsonDate.songs.at(i).album.name));
         }
-        m_songListModel->setItem(i, 2, new QStandardItem(m_jsonDate.songs.at(i).album.name));
+
+    }
+    else
+    {
+        qDebug()<<"没有搜到歌曲";
     }
     ui->label_2->setText(QString("总计：%1").arg(QString::number(m_jsonDate.songs.count())));
-}
-
-void MainWindow::sendSelectPalySignal(QModelIndex index)
-{
-    //去抖动，防止重复信号
-    if (m_currSelectSongIndex == index.row())
-        return ;
-    emit selectPlay(&index);
 }
 
 
@@ -365,11 +367,12 @@ void MainWindow::startPlaySong(QModelIndex *index)
    qDebug()<<"ssss";
 }
 #else
-void MainWindow::startPlaySong(QModelIndex *index)
+void MainWindow::startPlaySong(QModelIndex index)
 {
    qDebug()<<"44444444";
-#if 0
-   m_currSelectSongIndex = index->row();
+   m_currSelectSongIndex = index.row();
+#if 1
+
    if (m_threadPlay->isRunning())
    {
        qDebug()<<"5555";

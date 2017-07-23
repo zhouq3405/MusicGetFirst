@@ -17,6 +17,12 @@ MyThread::~MyThread()
     {
         libvlc_release (m_vlc_init);
     }
+    if (m_mediaPlayer)
+    {
+        m_isRunning = 0;
+        wait(2000);  //wait the play thread exit normally.
+        libvlc_media_player_release (m_mediaPlayer);
+    }
 }
 
 void MyThread::setCallbackFunc(JsonWholeData_s *jsonDat, int index)
@@ -37,7 +43,7 @@ int MyThread::playClickedSong()
     qDebug()<<"播放 ："<<audio_url;
 
 
-    int wait_time=5000;
+    //int wait_time=5000;
 
     if (m_vlc_init)
     {
@@ -50,6 +56,11 @@ int MyThread::playClickedSong()
         }
 
         m_mediaPlayer = libvlc_media_player_new_from_media (m_media_t);
+        if (m_mediaPlayer == NULL)
+        {
+            emit playFailed();
+            return -1;
+        }
         /* No need to keep the media now */
         libvlc_media_release (m_media_t);
 
@@ -63,9 +74,23 @@ int MyThread::playClickedSong()
         }
 
         //wait until the tracks are created
-        _sleep (wait_time);
+        //_sleep (wait_time);
+        msleep(1000);
         m_mediaLen = libvlc_media_player_get_length(m_mediaPlayer);
-
+        if (m_mediaLen == -1)
+        {
+            libvlc_media_player_release(m_mediaPlayer);
+            m_mediaPlayer = NULL;
+            emit playFailed();    //播放出错
+            return -1;
+        }
+        else
+        {
+            if (m_mediaLen == 0)
+            {
+                qDebug()<<"长度为0， 未知";
+            }
+        }
         qDebug()<<"length (ms) = "<<m_mediaLen;
     }
     m_isRunning = 1;
@@ -74,6 +99,15 @@ int MyThread::playClickedSong()
        if (m_mediaPlayer)
        {
             m_currentPos = libvlc_media_player_get_time(m_mediaPlayer);
+            if (m_currentPos == -1)
+            {
+                qDebug()<<"获取当前pos出错";
+                libvlc_media_player_release(m_mediaPlayer);
+                m_mediaPlayer = NULL;
+                emit playFailed();    //播放出错
+                return -1;
+            }
+            //qDebug()<<"当前pos :"<<m_currentPos;
             emit reportCurPos(m_currentPos);
        }
        this->msleep(500);
@@ -129,7 +163,8 @@ int MyThread::stopPlaying()
     {
          m_isRunning = 0;
          libvlc_media_player_stop(m_mediaPlayer);
-         msleep(500);
+
+         wait(2000); //等待线程正常退出
          qDebug()<<"6666";
          emit stopFinished();
     }
