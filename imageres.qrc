@@ -6,5 +6,7 @@
         <file>image/preSong.png</file>
         <file>image/start.png</file>
         <file>image/sound.png</file>
+        <file>image/titile.png</file>
+        <file>image/logo.ico</file>
     </qresource>
 </RCC>

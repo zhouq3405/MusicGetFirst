@@ -17,10 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowIcon(QIcon(QStringLiteral(":/image/logo.ico")));
     m_threadPlay = new MyThread(this);
     m_manager = new QNetworkAccessManager(this);
 
-    m_songListModel = new QStandardItemModel;
+    m_songListModel = new QStandardItemModel(this);
     m_isPause = 1;
 
     ui->playcontrolbar->setVolBarVal(50);
@@ -60,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+
     delete ui;
 
 }

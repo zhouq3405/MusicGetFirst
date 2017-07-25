@@ -62,3 +62,5 @@ FORMS += \
 
 RESOURCES += \
     imageres.qrc
+
+RC_FILE = logo.rc
